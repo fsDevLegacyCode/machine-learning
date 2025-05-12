@@ -33,21 +33,6 @@ const Home = () => {
           price,
         }));
 
-        // Set chart data
-        setChartData({
-          labels: priceData.map((p) => p.date),
-          datasets: [
-            {
-              label: 'Preço BTC (USD)',
-              data: priceData.map((p) => p.price),
-              borderColor: 'rgba(75,192,192,1)',
-              backgroundColor: 'rgba(75,192,192,0.2)',
-              tension: 0.3,
-              fill: true,
-            },
-          ],
-        });
-
         const startOfMonth = priceData[0]?.price;
         const midMonth = priceData[Math.floor(priceData.length / 2)]?.price;
         const yesterday = priceData[priceData.length - 2]?.price;
@@ -67,6 +52,9 @@ const Home = () => {
           });
         }
 
+        const labels = priceData.map((p) => p.date);
+        const pricesOnly = priceData.map((p) => p.price);
+
         if (window.brain) {
           const net = new window.brain.NeuralNetwork({ hiddenLayers: [5, 5] });
           net.train(trainingData, { iterations: 1000, log: false });
@@ -75,6 +63,46 @@ const Home = () => {
           const normalizedPrediction = net.run(last3Days);
           const predicted = normalizedPrediction[0] * (maxPrice - minPrice) + minPrice;
           setPredictedPrice(predicted.toFixed(2));
+
+          labels.push('Amanhã');
+
+          setChartData({
+            labels,
+            datasets: [
+              {
+                label: 'Preço BTC (USD)',
+                data: [...pricesOnly, null], // manter espaço para amanhã
+                borderColor: 'rgba(75,192,192,1)',
+                backgroundColor: 'rgba(75,192,192,0.2)',
+                tension: 0.3,
+                fill: true,
+              },
+              {
+                label: '🔮 Previsão',
+                data: Array(pricesOnly.length).fill(null).concat(predicted),
+                borderColor: 'red',
+                backgroundColor: 'red',
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                showLine: false,
+              },
+            ],
+          });
+        } else {
+          // fallback sem previsão
+          setChartData({
+            labels,
+            datasets: [
+              {
+                label: 'Preço BTC (USD)',
+                data: pricesOnly,
+                borderColor: 'rgba(75,192,192,1)',
+                backgroundColor: 'rgba(75,192,192,0.2)',
+                tension: 0.3,
+                fill: true,
+              },
+            ],
+          });
         }
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -121,7 +149,11 @@ const Home = () => {
                   </tr>
                   <tr className="table-success">
                     <td>🔮 Previsão para Amanhã</td>
-                    <td><strong>${predictedPrice}</strong></td>
+                    <td>
+                      <strong style={{ color: predictedPrice > prices.today ? 'green' : 'red' }}>
+                        ${predictedPrice}
+                      </strong>
+                    </td>
                   </tr>
                 </tbody>
               </table>
