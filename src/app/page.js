@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { Pool } from 'pg';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -13,6 +14,39 @@ import {
 } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+async function getData() {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query('SELECT * FROM posts');
+    return rows;
+  } finally {
+    client.release();
+  }
+}
+
+async function setData(data) {
+  const client = await pool.connect();
+  try {
+    const query = 'INSERT INTO bitcoin_data (value) VALUES ($1) RETURNING *';
+    const values = [data.value];
+    const { rows } = await client.query(query, values);
+    return rows;
+  } finally {
+    client.release();
+  }
+}
+
+
+
 
 const Home = () => {
   const [prices, setPrices] = useState({});
@@ -63,7 +97,7 @@ const Home = () => {
           const normalizedPrediction = net.run(last3Days);
           const predicted = normalizedPrediction[0] * (maxPrice - minPrice) + minPrice;
           setPredictedPrice(predicted.toFixed(2));
-
+          setData(predicted.toFixed(2));
           labels.push('Amanhã');
 
           setChartData({
