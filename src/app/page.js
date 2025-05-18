@@ -26,7 +26,7 @@ const pool = new Pool({
 async function getData() {
   const client = await pool.connect();
   try {
-    const { rows } = await client.query('SELECT * FROM posts');
+    const { rows } = await client.query('SELECT * FROM bitcoin_data');
     return rows;
   } finally {
     client.release();
