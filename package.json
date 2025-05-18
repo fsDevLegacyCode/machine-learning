@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
     "@stackframe/stack": "^2.8.12",
     "chart.js": "^4.4.9",
     "next": "15.1.6",

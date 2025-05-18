@@ -19,20 +19,20 @@ const Home = () => {
   const [predictedPrice, setPredictedPrice] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function savePredictedPrice(value) {
-    try {
-      const res = await fetch('/api/bitcoin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value: Number(value) }),
-      });
-      if (!res.ok) throw new Error('Failed to save predicted price');
-      const saved = await res.json();
-      console.log('Saved to DB:', saved);
-    } catch (error) {
-      console.error(error);
-    }
+async function savePredictedPrice(value) {
+  try {
+    const res = await fetch('/pages/api/bitcoin.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value }),
+    });
+    if (!res.ok) throw new Error('Failed to save predicted price');
+    const saved = await res.json();
+    console.log('Saved to DB:', saved);
+  } catch (error) {
+    console.error(error);
   }
+}
 
   useEffect(() => {
     async function fetchBitcoinData() {
