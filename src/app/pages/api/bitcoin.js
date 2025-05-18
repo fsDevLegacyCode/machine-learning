@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    await sql('INSERT INTO predicted_prices (value) VALUES ($1)', [value]);
+    await sql('INSERT INTO bitcoin_data (value) VALUES ($1)', [value]);
     return res.status(200).json({ success: true, value });
   } catch (error) {
     console.error('DB insert error:', error);
