@@ -53,14 +53,13 @@ const Home = () => {
   useEffect(() => {
     async function fetchBitcoinData() {
       try {
-        // 1. Busca dados do CoinGecko
         const response = await fetch(
           'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily'
         );
         const data = await response.json();
 
         const priceData = data.prices.map(([timestamp, price]) => ({
-          date: new Date(timestamp).toLocaleDateString('en-CA'), // yyyy-mm-dd para facilitar
+          date: new Date(timestamp).toLocaleDateString('en-CA'),
           price,
         }));
 
@@ -83,7 +82,8 @@ const Home = () => {
           });
         }
 
-        // 2. Treina a rede e gera previsão
+        let predictedRounded = null;
+
         if (window.brain) {
           const net = new window.brain.NeuralNetwork({ hiddenLayers: [5, 5] });
           net.train(trainingData, { iterations: 1000, log: false });
@@ -92,40 +92,33 @@ const Home = () => {
           const normalizedPrediction = net.run(last3Days);
           const predicted = normalizedPrediction[0] * (maxPrice - minPrice) + minPrice;
 
-          setPredictedPrice(predicted.toFixed(2));
-          savePredictedPrice(Number(predicted.toFixed(2)));
+          predictedRounded = Number(predicted.toFixed(2));
+          setPredictedPrice(predictedRounded);
+          savePredictedPrice(predictedRounded);
         }
 
-        // 3. Busca previsões salvas no banco
         const savedPredictionsResponse = await getPredictedData();
         const savedPredictionsRaw = savedPredictionsResponse?.data || [];
 
-        // Mapeia para formato compatível com gráfico e agrupa valores
         const savedPredictions = savedPredictionsRaw.map(({ created_at, value }) => ({
           date: new Date(created_at).toLocaleDateString('en-CA'),
           value,
         }));
 
-        // 4. Prepara dados para gráfico
-
-        // Labels do gráfico: datas dos preços do CoinGecko + datas das previsões salvas
-        // Para evitar datas repetidas, vamos criar um Set
         const allDatesSet = new Set(priceData.map(p => p.date));
         savedPredictions.forEach(p => allDatesSet.add(p.date));
         const allDates = Array.from(allDatesSet).sort();
 
-        // Monta arrays com os preços originais alinhados nas datas allDates
         const priceMap = new Map(priceData.map(p => [p.date, p.price]));
         const savedMap = new Map(savedPredictions.map(p => [p.date, p.value]));
 
         const pricesAligned = allDates.map(date => priceMap.get(date) ?? null);
         const savedAligned = allDates.map(date => savedMap.get(date) ?? null);
 
-        // Se já temos o predictedPrice gerado pela rede (não no banco), adicionamos no fim com label 'Amanhã'
-        if (predictedPrice) {
+        if (predictedRounded !== null) {
           allDates.push('Valor Previsto');
           pricesAligned.push(null);
-          savedAligned.push(Number(predictedPrice));
+          savedAligned.push(predictedRounded);
         }
 
         setChartData({
@@ -158,7 +151,7 @@ const Home = () => {
     }
 
     fetchBitcoinData();
-}, []);
+  }, []);
 
   return (
     <div className="container mt-5">
