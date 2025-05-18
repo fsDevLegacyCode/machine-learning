@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Pool } from 'pg';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -23,27 +22,35 @@ const pool = new Pool({
   },
 });
 
-async function getData() {
-  const client = await pool.connect();
-  try {
-    const { rows } = await client.query('SELECT * FROM bitcoin_data');
-    return rows;
-  } finally {
-    client.release();
-  }
-}
+  useEffect(() => {
+    async function fetchDbData() {
+      try {
+        const res = await fetch('/api/bitcoin');
+        const data = await res.json();
+        setDbData(data);
+      } catch (error) {
+        console.error('Failed to fetch DB data:', error);
+      }
+    }
 
-async function setData(data) {
-  const client = await pool.connect();
-  try {
-    const query = 'INSERT INTO bitcoin_data (value) VALUES ($1) RETURNING *';
-    const values = [data.value];
-    const { rows } = await client.query(query, values);
-    return rows;
-  } finally {
-    client.release();
+    fetchDbData();
+  }, []);
+
+  async function savePredictedPrice(value) {
+    try {
+      const res = await fetch('/api/bitcoin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: Number(value) }),
+      });
+      if (!res.ok) throw new Error('Failed to save predicted price');
+      const saved = await res.json();
+      console.log('Saved to DB:', saved);
+      // Optionally update state if needed
+    } catch (error) {
+      console.error(error);
+    }
   }
-}
 
 
 
