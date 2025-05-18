@@ -1,4 +1,3 @@
-'use client';
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -14,27 +13,11 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-  useEffect(() => {
-    async function fetchDbData() {
-      try {
-        const res = await fetch('/api/bitcoin');
-        const data = await res.json();
-        setDbData(data);
-      } catch (error) {
-        console.error('Failed to fetch DB data:', error);
-      }
-    }
-
-    fetchDbData();
-  }, []);
+const Home = () => {
+  const [prices, setPrices] = useState({});
+  const [chartData, setChartData] = useState(null);
+  const [predictedPrice, setPredictedPrice] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   async function savePredictedPrice(value) {
     try {
@@ -46,20 +29,10 @@ const pool = new Pool({
       if (!res.ok) throw new Error('Failed to save predicted price');
       const saved = await res.json();
       console.log('Saved to DB:', saved);
-      // Optionally update state if needed
     } catch (error) {
       console.error(error);
     }
   }
-
-
-
-
-const Home = () => {
-  const [prices, setPrices] = useState({});
-  const [chartData, setChartData] = useState(null);
-  const [predictedPrice, setPredictedPrice] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchBitcoinData() {
@@ -103,8 +76,10 @@ const Home = () => {
           const last3Days = normalizedPrices.slice(-3);
           const normalizedPrediction = net.run(last3Days);
           const predicted = normalizedPrediction[0] * (maxPrice - minPrice) + minPrice;
+
           setPredictedPrice(predicted.toFixed(2));
-          savePredictedPrice(predicted.toFixed(2));
+          savePredictedPrice(Number(predicted.toFixed(2)));
+
           labels.push('Amanhã');
 
           setChartData({
@@ -112,7 +87,7 @@ const Home = () => {
             datasets: [
               {
                 label: 'Preço BTC (USD)',
-                data: [...pricesOnly, null], // manter espaço para amanhã
+                data: [...pricesOnly, null],
                 borderColor: 'rgba(75,192,192,1)',
                 backgroundColor: 'rgba(75,192,192,0.2)',
                 tension: 0.3,
@@ -130,7 +105,6 @@ const Home = () => {
             ],
           });
         } else {
-          // fallback sem previsão
           setChartData({
             labels,
             datasets: [
@@ -158,7 +132,6 @@ const Home = () => {
   return (
     <div className="container mt-5">
       <h1 className="text-center mb-4">📈 Bitcoin Price Prediction</h1>
-
       {loading ? (
         <div className="text-center">
           <div className="spinner-border text-primary" role="status"></div>
@@ -200,7 +173,6 @@ const Home = () => {
               </table>
             </div>
           </div>
-
           <div className="row justify-content-center">
             <div className="col-md-10">
               {chartData && (
