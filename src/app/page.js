@@ -122,11 +122,11 @@ const Home = () => {
         const savedAligned = allDates.map(date => savedMap.get(date) ?? null);
 
         // Se já temos o predictedPrice gerado pela rede (não no banco), adicionamos no fim com label 'Amanhã'
-        if (predictedPrice) {
-          allDates.push('Amanhã');
+        
+          allDates.push('Valor Previsto');
           pricesAligned.push(null);
           savedAligned.push(Number(predictedPrice));
-        }
+        
 
         setChartData({
           labels: allDates,
