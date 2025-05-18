@@ -104,7 +104,7 @@ const Home = () => {
           const normalizedPrediction = net.run(last3Days);
           const predicted = normalizedPrediction[0] * (maxPrice - minPrice) + minPrice;
           setPredictedPrice(predicted.toFixed(2));
-          setData(predicted.toFixed(2));
+          savePredictedPrice(predicted.toFixed(2));
           labels.push('Amanhã');
 
           setChartData({
