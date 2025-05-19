@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -48,6 +48,27 @@ const Home = () => {
       console.error(error);
       return null;
     }
+  }
+
+  // Função para agrupar valores por data e calcular a média
+  function agruparEMediarPorData(dados, campoValor) {
+    const map = new Map();
+    for (const item of dados) {
+      const date = item.date;
+      const value = item[campoValor];
+      if (!map.has(date)) {
+        map.set(date, []);
+      }
+      map.get(date).push(value);
+    }
+
+    const resultado = [];
+    for (const [date, valores] of map.entries()) {
+      const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+      resultado.push({ date, value: media });
+    }
+
+    return resultado;
   }
 
   useEffect(() => {
@@ -105,16 +126,21 @@ const Home = () => {
           value,
         }));
 
-        const allDatesSet = new Set(priceData.map(p => p.date));
-        savedPredictions.forEach(p => allDatesSet.add(p.date));
+        // Agrupar e calcular média por data
+        const priceMediaPorData = agruparEMediarPorData(priceData, 'price');
+        const previsoesMediaPorData = agruparEMediarPorData(savedPredictions, 'value');
+
+        const allDatesSet = new Set(priceMediaPorData.map(p => p.date));
+        previsoesMediaPorData.forEach(p => allDatesSet.add(p.date));
         const allDates = Array.from(allDatesSet).sort();
 
-        const priceMap = new Map(priceData.map(p => [p.date, p.price]));
-        const savedMap = new Map(savedPredictions.map(p => [p.date, p.value]));
+        const priceMap = new Map(priceMediaPorData.map(p => [p.date, p.value]));
+        const savedMap = new Map(previsoesMediaPorData.map(p => [p.date, p.value]));
 
         const pricesAligned = allDates.map(date => priceMap.get(date) ?? null);
         const savedAligned = allDates.map(date => savedMap.get(date) ?? null);
 
+        // Adiciona previsão mais recente ao final
         if (predictedRounded !== null) {
           allDates.push('Valor Previsto');
           pricesAligned.push(null);
@@ -133,7 +159,7 @@ const Home = () => {
               fill: true,
             },
             {
-              label: '🔮 Previsões salvas',
+              label: '🔮 Previsões salvas (média diária)',
               data: savedAligned,
               borderColor: 'red',
               backgroundColor: 'rgba(255,0,0,0.2)',
